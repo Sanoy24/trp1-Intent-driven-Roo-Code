@@ -31,6 +31,7 @@ export class TraceSerializer {
 		contentHash: string
 		modelIdentifier: string
 		mutationClass: "AST_REFACTOR" | "INTENT_EVOLUTION" | "BUG_FIX"
+		ranges?: Array<{ start_line: number; end_line: number; content_hash: string }>
 	}): Promise<string> {
 		const traceId = uuidv4()
 		const timestamp = new Date().toISOString()
@@ -41,11 +42,14 @@ export class TraceSerializer {
 		// Convert to relative path
 		const relativePath = path.relative(this.workspaceRoot, params.filePath).replace(/\\/g, "/")
 
-		const range: AgentTraceRange = {
-			start_line: params.startLine,
-			end_line: params.endLine,
-			content_hash: params.contentHash,
-		}
+		// Support AST-level ranges for precise correlation
+		const ranges = params.ranges || [
+			{
+				start_line: params.startLine,
+				end_line: params.endLine,
+				content_hash: params.contentHash,
+			},
+		]
 
 		const conversation: AgentTraceConversation = {
 			url: params.sessionId,
@@ -53,7 +57,7 @@ export class TraceSerializer {
 				entity_type: "AI",
 				model_identifier: params.modelIdentifier,
 			},
-			ranges: [range],
+			ranges,
 			related: [
 				{
 					type: "specification",

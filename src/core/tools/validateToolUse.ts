@@ -17,6 +17,11 @@ export function isValidToolName(toolName: string, experiments?: Record<string, b
 		return true
 	}
 
+	// Internal tools for Intent-Driven Architecture
+	if (toolName === "list_active_intents" || toolName === "select_active_intent") {
+		return true
+	}
+
 	if (experiments?.customTools && customToolRegistry.has(toolName)) {
 		return true
 	}
