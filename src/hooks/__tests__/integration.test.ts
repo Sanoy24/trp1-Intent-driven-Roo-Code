@@ -4,15 +4,17 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest"
+import * as fsPromises from "fs/promises"
 import { HookEngine } from "../HookEngine"
 import { PreToolUseHook } from "../PreToolUseHook"
 import { IntentContextLoader } from "../IntentContextLoader"
-import { HookContext, HookResult } from "../types"
+import { HookContext } from "../types"
 
 // Mock file system operations
 vi.mock("fs/promises", () => ({
 	readFile: vi.fn(),
 	writeFile: vi.fn(),
+	appendFile: vi.fn(),
 	mkdir: vi.fn(),
 }))
 
@@ -52,7 +54,7 @@ describe("TRP1 Intent Handshake Integration", () => {
 			acceptance_criteria: ["Unit tests in tests/auth/ pass"],
 		}
 
-		vi.mocked(require("fs/promises").readFile).mockResolvedValueOnce(`
+		vi.mocked(fsPromises.readFile).mockResolvedValueOnce(`
 active_intents:
   - id: "${intentId}"
     name: "${mockIntent.name}"
@@ -84,8 +86,22 @@ active_intents:
 			filePath: "src/auth/middleware.ts",
 		}
 
-		// Mock file operations
-		vi.mocked(require("fs/promises").readFile).mockResolvedValueOnce("const oldHash = 'sha256:abc123'")
+		// Mock: active_intents (loadIntent), .intentignore x2, file content (baseline hash)
+		vi.mocked(fsPromises.readFile)
+			.mockResolvedValueOnce(
+				`
+active_intents:
+  - id: "${intentId}"
+    name: "${mockIntent.name}"
+    status: "${mockIntent.status}"
+    owned_scope: ${JSON.stringify(mockIntent.owned_scope)}
+    constraints: ${JSON.stringify(mockIntent.constraints)}
+    acceptance_criteria: ${JSON.stringify(mockIntent.acceptance_criteria)}
+`,
+			)
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+			.mockResolvedValueOnce("const oldHash = 'sha256:abc123'")
 
 		// Execute write_to_file with active intent
 		const actionResult = await hookEngine.preToolUse(contextualizedContext)
@@ -107,6 +123,22 @@ active_intents:
 			workspaceRoot: mockWorkspaceRoot,
 			filePath: "src/other/file.ts",
 		}
+
+		// Mock for invalidContext: loadIntent (yaml), IntentIgnoreLoader (2x ENOENT)
+		vi.mocked(fsPromises.readFile)
+			.mockResolvedValueOnce(
+				`
+active_intents:
+  - id: "${intentId}"
+    name: "${mockIntent.name}"
+    status: "${mockIntent.status}"
+    owned_scope: ${JSON.stringify(mockIntent.owned_scope)}
+    constraints: ${JSON.stringify(mockIntent.constraints)}
+    acceptance_criteria: ${JSON.stringify(mockIntent.acceptance_criteria)}
+`,
+			)
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
 
 		const invalidResult = await hookEngine.preToolUse(invalidContext)
 		expect(invalidResult.allow).toBe(false)
@@ -212,8 +244,20 @@ describe("TRP1 Agent Trace Specification Compliance", () => {
 			filePath: "src/hooks/TestHook.ts",
 		}
 
-		// Mock file write simulation
-		vi.mocked(require("fs/promises").readFile).mockResolvedValueOnce("export class TestHook {}")
+		// Mock: IntentIgnoreLoader (2x ENOENT), active_intents, baseline, appendTrace
+		vi.mocked(fsPromises.readFile)
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+			.mockRejectedValueOnce(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+			.mockResolvedValueOnce(
+				`active_intents:
+  - id: "INT-001"
+    name: "Test"
+    status: "IN_PROGRESS"
+    owned_scope: ["src/hooks/**"]
+    constraints: []
+    acceptance_criteria: []`,
+			)
+			.mockResolvedValueOnce("export class TestHook {}")
 
 		await hookEngine.preToolUse(context)
 		await hookEngine.postToolUse(context, "File created successfully")
@@ -252,6 +296,10 @@ describe("TRP1 Agent Trace Specification Compliance", () => {
 })
 
 describe("TRP1 Master Thinker Workflow", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
 	it("should demonstrate parallel orchestrator pattern", async () => {
 		// This test simulates the "Master Thinker" workflow from the specification
 		// where multiple agents (Architect, Builder, Tester) coordinate via shared brain
@@ -260,7 +308,16 @@ describe("TRP1 Master Thinker Workflow", () => {
 		const builderSession = "session-builder"
 		const intentId = "INT-002"
 
-		// Initialize shared brain (CLAUDE.md)
+		// Mock active_intents.yaml with INT-002 and CLAUDE.md
+		const yamlContent = `active_intents:
+  - id: "${intentId}"
+    name: "Weather API Implementation"
+    status: "PENDING"
+    created_at: "2026-02-18T00:00:00Z"
+    owned_scope: ["src/api/**"]
+    constraints: ["RESTful design", "JWT required"]
+    acceptance_criteria: ["Rate limiting", "Circuit breaker"]
+`
 		const sharedBrainContent = `# Shared Brain - Weather API Implementation
 
 ## Architectural Decision
@@ -270,8 +327,13 @@ describe("TRP1 Master Thinker Workflow", () => {
 
 ## Lessons Learned
 - [2026-02-18] Discovered rate limiting issues in external API calls
-- [2026-02-18] Need to implement circuit breaker for external dependencies
 `
+
+		// select_active_intent: loadIntent, updateIntentStatus (loadActiveIntents again), loadSharedBrain
+		vi.mocked(fsPromises.readFile)
+			.mockResolvedValueOnce(yamlContent)
+			.mockResolvedValueOnce(yamlContent)
+			.mockResolvedValueOnce(sharedBrainContent)
 
 		// Architect session establishes context
 		const architectContext: HookContext = {

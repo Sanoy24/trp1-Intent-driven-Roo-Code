@@ -130,16 +130,25 @@ ${criteriaList}
 	}
 
 	/**
-	 * Load shared brain (CLAUDE.md) content
-	 * @returns Content of CLAUDE.md or empty string
+	 * Load shared brain (CLAUDE.md or AGENT.md) content
+	 * Checks .orchestration/ first, then workspace root (per task doc)
+	 * @returns Content of CLAUDE.md/AGENT.md or empty string
 	 */
 	async loadSharedBrain(): Promise<string> {
-		try {
-			const claudePath = path.join(this.orchestrationDir, "CLAUDE.md")
-			return await fs.readFile(claudePath, "utf8")
-		} catch {
-			return ""
+		const candidates = [
+			path.join(this.orchestrationDir, "CLAUDE.md"),
+			path.join(this.orchestrationDir, "AGENT.md"),
+			path.join(this.workspaceRoot, "CLAUDE.md"),
+			path.join(this.workspaceRoot, "AGENT.md"),
+		]
+		for (const filePath of candidates) {
+			try {
+				return await fs.readFile(filePath, "utf8")
+			} catch {
+				// continue to next candidate
+			}
 		}
+		return ""
 	}
 
 	/**

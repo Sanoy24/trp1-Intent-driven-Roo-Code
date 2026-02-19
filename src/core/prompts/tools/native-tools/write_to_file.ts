@@ -15,6 +15,10 @@ const PATH_PARAMETER_DESCRIPTION = `The path of the file to write to (relative t
 
 const CONTENT_PARAMETER_DESCRIPTION = `The content to write to the file. ALWAYS provide the COMPLETE intended content of the file, without any truncation or omissions. You MUST include ALL parts of the file, even if they haven't been modified. Do NOT include line numbers in the content.`
 
+const INTENT_ID_DESCRIPTION = `(TRP1) The active intent ID from select_active_intent. Required when governance is enabled. Must match an entry in active_intents.yaml.`
+
+const MUTATION_CLASS_DESCRIPTION = `(TRP1) Semantic classification: AST_REFACTOR (syntax change, same intent), INTENT_EVOLUTION (new feature), or BUG_FIX. Improves trace accuracy.`
+
 export default {
 	type: "function",
 	function: {
@@ -31,6 +35,15 @@ export default {
 				content: {
 					type: "string",
 					description: CONTENT_PARAMETER_DESCRIPTION,
+				},
+				intent_id: {
+					type: "string",
+					description: INTENT_ID_DESCRIPTION,
+				},
+				mutation_class: {
+					type: "string",
+					enum: ["AST_REFACTOR", "INTENT_EVOLUTION", "BUG_FIX"],
+					description: MUTATION_CLASS_DESCRIPTION,
 				},
 			},
 			required: ["path", "content"],

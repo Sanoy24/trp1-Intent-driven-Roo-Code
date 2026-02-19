@@ -42,6 +42,7 @@ import { formatResponse } from "../prompts/responses"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 import { HookEngine } from "../../hooks/HookEngine"
 import { HookContext, HookResult } from "../../hooks/types"
+import { extractFirstPathFromPatch } from "../../hooks/PatchUtils"
 import { IntentApi } from "../../api/IntentApi"
 
 /**
@@ -329,18 +330,20 @@ export async function presentAssistantMessage(cline: Task) {
 
 			// TRP1 Hook Engine Integration - Initialize early for use in pushToolResult
 			const hookEngine = HookEngine.getInstance(cline.cwd)
+			const params = { ...(block.params || {}), ...(block.nativeArgs || {}) } as any
+			const filePath =
+				params?.path ||
+				params?.file_path ||
+				params?.path_to_file ||
+				(block.name === "apply_patch" && params?.patch ? extractFirstPathFromPatch(params.patch) : undefined)
+
 			const hookContext: HookContext = {
 				toolName: block.name,
-				toolParams: { ...(block.params || {}), ...(block.nativeArgs || {}) } as any,
+				toolParams: params,
 				activeIntentId: cline.activeIntentId,
 				sessionId: cline.taskId,
 				workspaceRoot: cline.cwd,
-				filePath:
-					(block.nativeArgs as any)?.path ||
-					(block.nativeArgs as any)?.file_path ||
-					block.params?.path ||
-					block.params?.file_path ||
-					block.params?.path_to_file,
+				filePath,
 			}
 
 			const toolDescription = (): string => {

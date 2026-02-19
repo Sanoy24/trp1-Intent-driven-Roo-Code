@@ -1,11 +1,13 @@
 /**
  * Scope Enforcer - Validates file paths against intent's owned_scope
  * Prevents agents from modifying files outside their declared scope
+ * Supports .intentignore for path and intent exclusions
  */
 
 import * as path from "path"
 import { minimatch } from "minimatch"
 import { IntentMetadata } from "./types"
+import { IntentIgnoreLoader } from "./IntentIgnoreLoader"
 
 export class ScopeEnforcer {
 	/**
@@ -13,13 +15,15 @@ export class ScopeEnforcer {
 	 * @param filePath Absolute or relative file path
 	 * @param intent The active intent with owned_scope patterns
 	 * @param workspaceRoot Workspace root directory
+	 * @param intentIgnore Optional pre-loaded .intentignore config
 	 * @returns Object with allowed flag and error message if blocked
 	 */
-	static checkScope(
+	static async checkScope(
 		filePath: string,
 		intent: IntentMetadata,
 		workspaceRoot: string,
-	): { allowed: boolean; error?: string } {
+		intentIgnore?: { excludedPaths: string[]; excludedIntents: string[] },
+	): Promise<{ allowed: boolean; error?: string }> {
 		// Convert to relative path if absolute
 		let relativePath = filePath
 		if (path.isAbsolute(filePath)) {
@@ -28,6 +32,22 @@ export class ScopeEnforcer {
 
 		// Normalize path separators
 		relativePath = relativePath.replace(/\\/g, "/")
+
+		// Check .intentignore: if intent is excluded, allow all paths for that intent
+		if (
+			intentIgnore?.excludedIntents.length &&
+			IntentIgnoreLoader.isIntentExcluded(intent.id, intentIgnore.excludedIntents)
+		) {
+			return { allowed: true }
+		}
+
+		// Check .intentignore: if path is excluded, allow regardless of scope
+		if (
+			intentIgnore?.excludedPaths.length &&
+			IntentIgnoreLoader.isPathExcluded(relativePath, intentIgnore.excludedPaths)
+		) {
+			return { allowed: true }
+		}
 
 		// Check against each owned_scope pattern
 		const isInScope = intent.owned_scope.some((pattern) => {

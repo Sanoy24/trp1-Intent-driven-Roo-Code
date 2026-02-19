@@ -3,19 +3,51 @@
  * Enforces governance rules and validates operations
  */
 
-import { HookContext, HookResult, IntentMetadata } from "./types"
+import * as path from "path"
+import { HookContext, HookResult } from "./types"
 import { ScopeEnforcer } from "./ScopeEnforcer"
 import { OptimisticLockManager } from "./OptimisticLockManager"
 import { CommandClassifier } from "./CommandClassifier"
 import { IntentContextLoader } from "./IntentContextLoader"
+import { IntentIgnoreLoader } from "./IntentIgnoreLoader"
+import { extractFirstPathFromPatch } from "./PatchUtils"
+
+/** Tools that mutate state and require intent gatekeeper */
+const MUTATING_TOOLS = [
+	"write_to_file",
+	"execute_command",
+	"apply_diff",
+	"edit",
+	"search_and_replace",
+	"search_replace",
+	"edit_file",
+	"apply_patch",
+	"insert_code_block",
+	"replace_in_file",
+] as const
+
+/** File-modifying tools that require scope and lock checks */
+const FILE_MUTATING_TOOLS = [
+	"write_to_file",
+	"apply_diff",
+	"edit",
+	"search_and_replace",
+	"search_replace",
+	"edit_file",
+	"apply_patch",
+	"insert_code_block",
+	"replace_in_file",
+] as const
 
 export class PreToolUseHook {
 	private intentLoader: IntentContextLoader
 	private lockManager: OptimisticLockManager
+	private intentIgnoreLoader: IntentIgnoreLoader
 
 	constructor(workspaceRoot: string, lockManager: OptimisticLockManager) {
 		this.intentLoader = new IntentContextLoader(workspaceRoot)
 		this.lockManager = lockManager
+		this.intentIgnoreLoader = new IntentIgnoreLoader(workspaceRoot)
 	}
 
 	/**
@@ -50,9 +82,13 @@ export class PreToolUseHook {
 				}
 			}
 
-			// Scope enforcement for file writes
-			if (context.toolName === "write_to_file" && context.filePath) {
-				const scopeCheck = ScopeEnforcer.checkScope(context.filePath, intent, context.workspaceRoot)
+			// Scope and lock enforcement for all file-modifying tools
+			const filePath = this.getFilePathForTool(context)
+			if (filePath) {
+				const absPath = path.isAbsolute(filePath) ? filePath : path.join(context.workspaceRoot, filePath)
+				const intentIgnore = await this.intentIgnoreLoader.load()
+
+				const scopeCheck = await ScopeEnforcer.checkScope(absPath, intent, context.workspaceRoot, intentIgnore)
 				if (!scopeCheck.allowed) {
 					return {
 						allow: false,
@@ -61,7 +97,7 @@ export class PreToolUseHook {
 				}
 
 				// Optimistic lock check
-				const collisionCheck = await this.lockManager.checkForCollision(context.filePath)
+				const collisionCheck = await this.lockManager.checkForCollision(absPath)
 				if (collisionCheck.hasCollision) {
 					return {
 						allow: false,
@@ -69,9 +105,9 @@ export class PreToolUseHook {
 					}
 				}
 
-				// Record baseline if not already tracked
-				if (!this.lockManager.getBaseline(context.filePath)) {
-					await this.lockManager.recordBaseline(context.filePath)
+				// Record baseline if not already tracked (for collision detection)
+				if (!this.lockManager.getBaseline(absPath)) {
+					await this.lockManager.recordBaseline(absPath)
 				}
 			}
 
@@ -94,6 +130,19 @@ export class PreToolUseHook {
 		}
 
 		return { allow: true }
+	}
+
+	/** Extract file path from tool params (supports path, file_path, path_to_file, and patch extraction) */
+	private getFilePathForTool(context: HookContext): string | undefined {
+		const p = context.toolParams
+		if (p.path) return p.path
+		if (p.file_path) return p.file_path
+		if (p.path_to_file) return p.path_to_file
+		// apply_patch: extract first path from patch content
+		if (context.toolName === "apply_patch" && p.patch) {
+			return extractFirstPathFromPatch(p.patch)
+		}
+		return context.filePath
 	}
 
 	/**
@@ -146,7 +195,6 @@ export class PreToolUseHook {
 	 * @returns true if tool mutates state
 	 */
 	private isMutatingTool(toolName: string): boolean {
-		const mutatingTools = ["write_to_file", "execute_command", "apply_diff", "insert_code_block", "replace_in_file"]
-		return mutatingTools.includes(toolName)
+		return MUTATING_TOOLS.includes(toolName as (typeof MUTATING_TOOLS)[number])
 	}
 }
