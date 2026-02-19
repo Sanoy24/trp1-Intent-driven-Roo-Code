@@ -1,0 +1,11 @@
+# .intentignore - Exclude paths or intents from scope enforcement
+# Copy to .intentignore in workspace root or .orchestration/ to customize
+#
+# Format: One pattern per line, # for comments
+# - Glob patterns: exclude file paths from scope checks
+# - intent:ID - exclude entire intent from scope enforcement
+#
+# Example:
+# node_modules/**
+# dist/**
+# intent:INT-LEGACY
