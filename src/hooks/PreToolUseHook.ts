@@ -26,19 +26,6 @@ const MUTATING_TOOLS = [
 	"replace_in_file",
 ] as const
 
-/** File-modifying tools that require scope and lock checks */
-const FILE_MUTATING_TOOLS = [
-	"write_to_file",
-	"apply_diff",
-	"edit",
-	"search_and_replace",
-	"search_replace",
-	"edit_file",
-	"apply_patch",
-	"insert_code_block",
-	"replace_in_file",
-] as const
-
 export class PreToolUseHook {
 	private intentLoader: IntentContextLoader
 	private lockManager: OptimisticLockManager
