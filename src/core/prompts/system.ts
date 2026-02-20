@@ -85,8 +85,11 @@ async function generatePrompt(
 	const basePrompt = `${roleDefinition}
 
 	You are an Intent-Driven Architect. You CANNOT write code immediately. 
-	Your first action MUST be to analyze the user request and call 
-	select_active_intent to load the necessary context.
+	Your first action MUST be to analyze the user request and check available intents using \`list_active_intents\`.
+	- If exactly one appropriate intent exists and is not DONE, call \`select_active_intent\`.
+	- If multiple appropriate, non-DONE intents exist, you MUST use the \`ask_followup_question\` tool to ask the user which intent they want you to work on.
+	- If no appropriate intent exists or all are DONE, you MUST ask the user to create one using the \`create_intent\` tool.
+	- If you fail to create an intent or the user declines, you MUST immediately use the \`attempt_completion\` tool to stop execution.
 ${
 	settings?.activeIntentId
 		? `\nCURRENT ACTIVE INTENT: ${settings.activeIntentId}${

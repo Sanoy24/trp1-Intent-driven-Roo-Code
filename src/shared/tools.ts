@@ -119,6 +119,12 @@ export type NativeToolArgs = {
 	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	list_active_intents: {}
 	select_active_intent: { intent_id: string }
+	create_intent: {
+		name: string
+		owned_scope: string[]
+		constraints: string[]
+		acceptance_criteria: string[]
+	}
 }
 
 /**
@@ -290,10 +296,11 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	update_todo_list: "update todo list",
 	run_slash_command: "run slash command",
 	skill: "load skill",
-	generate_image: "generate images",
-	custom_tool: "use custom tools",
+	generate_image: "generate an image",
+	custom_tool: "use custom tool",
 	list_active_intents: "list active intents",
 	select_active_intent: "select active intent",
+	create_intent: "create a new active intent",
 } as const
 
 // Define available tool groups.
@@ -328,6 +335,7 @@ export const ALWAYS_AVAILABLE_TOOLS: ToolName[] = [
 	"skill",
 	"list_active_intents",
 	"select_active_intent",
+	"create_intent",
 ] as const
 
 /**

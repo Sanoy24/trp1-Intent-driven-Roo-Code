@@ -22,6 +22,7 @@ import select_active_intent from "./select_active_intent"
 import switchMode from "./switch_mode"
 import updateTodoList from "./update_todo_list"
 import writeToFile from "./write_to_file"
+import createIntent from "./create_intent"
 
 export { getMcpServerTools } from "./mcp_server"
 export { convertOpenAIToolToAnthropic, convertOpenAIToolsToAnthropic } from "./converters"
@@ -72,6 +73,7 @@ export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.Ch
 		switchMode,
 		updateTodoList,
 		writeToFile,
+		createIntent,
 	] satisfies OpenAI.Chat.ChatCompletionTool[]
 }
 

@@ -448,6 +448,22 @@ export class NativeToolCallParser {
 				}
 				break
 
+			case "create_intent":
+				if (
+					partialArgs.name !== undefined ||
+					partialArgs.owned_scope !== undefined ||
+					partialArgs.constraints !== undefined ||
+					partialArgs.acceptance_criteria !== undefined
+				) {
+					nativeArgs = {
+						name: partialArgs.name,
+						owned_scope: partialArgs.owned_scope,
+						constraints: partialArgs.constraints,
+						acceptance_criteria: partialArgs.acceptance_criteria,
+					}
+				}
+				break
+
 			case "attempt_completion":
 				if (partialArgs.result) {
 					nativeArgs = { result: partialArgs.result }
@@ -772,6 +788,22 @@ export class NativeToolCallParser {
 											include_header: this.coerceOptionalBoolean(args.indentation.include_header),
 										}
 									: undefined,
+						} as NativeArgsFor<TName>
+					}
+					break
+
+				case "create_intent":
+					if (
+						args.name !== undefined &&
+						args.owned_scope !== undefined &&
+						args.constraints !== undefined &&
+						args.acceptance_criteria !== undefined
+					) {
+						nativeArgs = {
+							name: args.name,
+							owned_scope: args.owned_scope,
+							constraints: args.constraints,
+							acceptance_criteria: args.acceptance_criteria,
 						} as NativeArgsFor<TName>
 					}
 					break

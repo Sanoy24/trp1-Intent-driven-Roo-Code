@@ -33,6 +33,7 @@ import { newTaskTool } from "../tools/NewTaskTool"
 import { updateTodoListTool } from "../tools/UpdateTodoListTool"
 import { runSlashCommandTool } from "../tools/RunSlashCommandTool"
 import { skillTool } from "../tools/SkillTool"
+import { createIntentTool } from "../tools/CreateIntentTool"
 import { generateImageTool } from "../tools/GenerateImageTool"
 import { applyDiffTool as applyDiffToolClass } from "../tools/ApplyDiffTool"
 import { isValidToolName, validateToolUse } from "../tools/validateToolUse"
@@ -441,7 +442,10 @@ export async function presentAssistantMessage(cline: Task) {
 			if (!block.partial) {
 				const customTool = stateExperiments?.customTools ? customToolRegistry.get(block.name) : undefined
 				const isKnownTool = isValidToolName(String(block.name), stateExperiments)
-				const isIntentTool = block.name === "list_active_intents" || block.name === "select_active_intent"
+				const isIntentTool =
+					block.name === "list_active_intents" ||
+					block.name === "select_active_intent" ||
+					block.name === "create_intent"
 				if (isKnownTool && !block.nativeArgs && !customTool && !isIntentTool) {
 					const errorMessage =
 						`Invalid tool call for '${block.name}': missing nativeArgs. ` +
@@ -687,6 +691,14 @@ export async function presentAssistantMessage(cline: Task) {
 						pushToolResult(result)
 						break
 					}
+					case "create_intent":
+						// Route to CreateIntentTool which will prompt user and create intent
+						await createIntentTool.handle(cline, block as ToolUse<"create_intent">, {
+							askApproval,
+							handleError,
+							pushToolResult,
+						})
+						break
 					case "write_to_file":
 						await checkpointSaveAndMark(cline)
 						await writeToFileTool.handle(cline, block as ToolUse<"write_to_file">, {

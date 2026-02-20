@@ -68,6 +68,12 @@ export class PreToolUseHook {
 					error: `Invalid Intent: Intent "${context.activeIntentId}" not found in active_intents.yaml`,
 				}
 			}
+			if (intent.status === "DONE") {
+				return {
+					allow: false,
+					error: `Intent Gatekeeper: The selected intent "${context.activeIntentId}" is already marked as DONE.\n\nYou cannot make further modifications under a completed intent. Please call list_active_intents() to find a PENDING or IN_PROGRESS intent, or request to create a new one.`,
+				}
+			}
 
 			// Scope and lock enforcement for all file-modifying tools
 			const filePath = this.getFilePathForTool(context)

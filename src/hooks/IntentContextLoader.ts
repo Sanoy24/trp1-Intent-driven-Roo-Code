@@ -130,6 +130,54 @@ ${criteriaList}
 	}
 
 	/**
+	 * Create a new intent and save to active_intents.yaml
+	 * @param intentData The data for the new intent
+	 * @returns The newly created intent ID
+	 */
+	async createIntent(intentData: Omit<IntentMetadata, "id" | "status" | "last_trace_ref">): Promise<string> {
+		await this.ensureOrchestrationDir()
+		const yamlPath = path.join(this.orchestrationDir, "active_intents.yaml")
+		let intents: IntentMetadata[] = []
+
+		try {
+			intents = await this.loadActiveIntents()
+		} catch (e) {
+			// File might not exist yet, start fresh
+		}
+
+		// Determine next ID (e.g., INT-001 -> INT-002)
+		let nextNum = 1
+		for (const intent of intents) {
+			const match = intent.id.match(/^INT-(\d+)$/)
+			if (match) {
+				const num = parseInt(match[1], 10)
+				if (num >= nextNum) {
+					nextNum = num + 1
+				}
+			}
+		}
+
+		const nextId = `INT-${nextNum.toString().padStart(3, "0")}`
+
+		const newIntent: IntentMetadata = {
+			id: nextId,
+			name: intentData.name,
+			status: "PENDING",
+			created_at: new Date().toISOString(),
+			owned_scope: intentData.owned_scope,
+			constraints: intentData.constraints,
+			acceptance_criteria: intentData.acceptance_criteria,
+		}
+
+		intents.push(newIntent)
+
+		const data: ActiveIntent = { active_intents: intents }
+		await fs.writeFile(yamlPath, yaml.stringify(data), "utf8")
+
+		return nextId
+	}
+
+	/**
 	 * Load shared brain (CLAUDE.md or AGENT.md) content
 	 * Checks .orchestration/ first, then workspace root (per task doc)
 	 * @returns Content of CLAUDE.md/AGENT.md or empty string
