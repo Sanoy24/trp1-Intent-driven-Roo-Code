@@ -9,6 +9,7 @@ export interface HookContext {
 	activeIntentId: string | undefined
 	sessionId: string
 	workspaceRoot: string
+	modelIdentifier: string
 	filePath?: string
 }
 

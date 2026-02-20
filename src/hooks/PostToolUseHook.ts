@@ -61,6 +61,17 @@ export class PostToolUseHook {
 		if (context.toolName === "execute_command") {
 			await this.handleCommandExecution(context, result)
 		}
+
+		// Automate "DONE" transition on successful task completion
+		if (context.toolName === "attempt_completion" && context.activeIntentId) {
+			await this.handleCompletion(context)
+		}
+	}
+
+	/** Mark intent as DONE when agent attempts completion */
+	private async handleCompletion(context: HookContext): Promise<void> {
+		if (!context.activeIntentId) return
+		await this.intentLoader.updateIntentStatus(context.activeIntentId, "DONE")
 	}
 
 	/** Record baseline hash when agent reads files (enables optimistic locking) */
@@ -108,7 +119,7 @@ export class PostToolUseHook {
 			if (!contentHash) return
 
 			const mutationClass = this.determineMutationClass(context)
-			const modelIdentifier = context.toolParams.modelIdentifier || "unknown"
+			const modelIdentifier = context.modelIdentifier
 			const ranges = await this.computeAstRanges(filePath)
 
 			const traceId = await this.traceSerializer.appendTrace({

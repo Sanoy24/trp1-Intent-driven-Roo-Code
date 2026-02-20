@@ -46,7 +46,7 @@ export default {
 					description: MUTATION_CLASS_DESCRIPTION,
 				},
 			},
-			required: ["path", "content"],
+			required: ["path", "content", "intent_id", "mutation_class"],
 			additionalProperties: false,
 		},
 	},

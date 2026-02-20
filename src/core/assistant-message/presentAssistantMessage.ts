@@ -343,6 +343,7 @@ export async function presentAssistantMessage(cline: Task) {
 				activeIntentId: cline.activeIntentId,
 				sessionId: cline.taskId,
 				workspaceRoot: cline.cwd,
+				modelIdentifier: cline.api.getModel()?.id || "unknown",
 				filePath,
 			}
 
@@ -514,9 +515,16 @@ export async function presentAssistantMessage(cline: Task) {
 				hasToolResult = true
 
 				// TRP1 Post-Tool-Use Hook
-				hookEngine.postToolUse(hookContext, resultContent).catch((err) => {
-					console.error("PostToolUse hook failed:", err)
-				})
+				// Only execute PostHook if the tool was not blocked by the Gatekeeper
+				// We determine this by checking if the content is an error string indicating a block
+				const isBlocked =
+					typeof resultContent === "string" && resultContent.includes("Action blocked by Hook Engine")
+
+				if (!isBlocked && typeof hookEngine !== "undefined") {
+					hookEngine.postToolUse(hookContext, resultContent).catch((err) => {
+						console.error("PostToolUse hook failed:", err)
+					})
+				}
 			}
 
 			const askApproval = async (
