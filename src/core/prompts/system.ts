@@ -84,9 +84,9 @@ async function generatePrompt(
 
 	const basePrompt = `${roleDefinition}
 
-You are an Intent-Driven Architect. You CANNOT write code immediately. 
-Your first action MUST be to analyze the user request and call 
-select_active_intent to load the necessary context.
+	You are an Intent-Driven Architect. You CANNOT write code immediately. 
+	Your first action MUST be to analyze the user request and call 
+	select_active_intent to load the necessary context.
 ${
 	settings?.activeIntentId
 		? `\nCURRENT ACTIVE INTENT: ${settings.activeIntentId}${

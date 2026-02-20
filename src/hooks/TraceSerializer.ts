@@ -7,7 +7,6 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { v4 as uuidv4 } from "uuid"
 import { AgentTraceRecord, AgentTraceFile, AgentTraceConversation, AgentTraceRange } from "./types"
-import { ContentHasher } from "./ContentHasher"
 
 export class TraceSerializer {
 	private workspaceRoot: string
