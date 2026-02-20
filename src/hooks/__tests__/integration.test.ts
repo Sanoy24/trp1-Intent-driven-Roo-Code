@@ -42,6 +42,7 @@ describe("TRP1 Intent Handshake Integration", () => {
 			activeIntentId: undefined,
 			sessionId,
 			workspaceRoot: mockWorkspaceRoot,
+			modelIdentifier: "",
 		}
 
 		// Mock the intent loader to return valid intent data
@@ -84,6 +85,7 @@ active_intents:
 			sessionId,
 			workspaceRoot: mockWorkspaceRoot,
 			filePath: "src/auth/middleware.ts",
+			modelIdentifier: "",
 		}
 
 		// Mock: active_intents (loadIntent), .intentignore x2, file content (baseline hash)
@@ -122,6 +124,7 @@ active_intents:
 			sessionId,
 			workspaceRoot: mockWorkspaceRoot,
 			filePath: "src/other/file.ts",
+			modelIdentifier: "",
 		}
 
 		// Mock for invalidContext: loadIntent (yaml), IntentIgnoreLoader (2x ENOENT)
@@ -158,6 +161,7 @@ active_intents:
 			sessionId: "session-test-002",
 			workspaceRoot: mockWorkspaceRoot,
 			filePath: "src/auth/middleware.ts",
+			modelIdentifier: "",
 		}
 
 		const result = await hookEngine.preToolUse(noIntentContext)
@@ -181,6 +185,7 @@ active_intents:
 			sessionId: session1,
 			workspaceRoot: mockWorkspaceRoot,
 			filePath,
+			modelIdentifier: "",
 		}
 
 		const readResult = await hookEngine.preToolUse(architectContext)
@@ -197,6 +202,7 @@ active_intents:
 			sessionId: session2,
 			workspaceRoot: mockWorkspaceRoot,
 			filePath,
+			modelIdentifier: "",
 		}
 
 		// This should be allowed (no baseline recorded for this session)
@@ -214,6 +220,7 @@ active_intents:
 			sessionId: session1,
 			workspaceRoot: mockWorkspaceRoot,
 			filePath,
+			modelIdentifier: "",
 		}
 
 		const collisionResult = await hookEngine.preToolUse(architectWriteContext)
@@ -242,6 +249,7 @@ describe("TRP1 Agent Trace Specification Compliance", () => {
 			sessionId: "session-trace-test",
 			workspaceRoot: "/test/workspace",
 			filePath: "src/hooks/TestHook.ts",
+			modelIdentifier: "",
 		}
 
 		// Mock: IntentIgnoreLoader (2x ENOENT), active_intents, baseline, appendTrace
@@ -342,6 +350,7 @@ describe("TRP1 Master Thinker Workflow", () => {
 			activeIntentId: undefined,
 			sessionId: architectSession,
 			workspaceRoot: "/test/workspace",
+			modelIdentifier: "",
 		}
 
 		const hookEngine = HookEngine.getInstance("/test/workspace")
@@ -362,6 +371,7 @@ describe("TRP1 Master Thinker Workflow", () => {
 			sessionId: builderSession,
 			workspaceRoot: "/test/workspace",
 			filePath: "src/api/weather.ts",
+			modelIdentifier: "",
 		}
 
 		const builderResult = await hookEngine.preToolUse(builderContext)
