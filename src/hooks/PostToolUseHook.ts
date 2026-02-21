@@ -68,10 +68,24 @@ export class PostToolUseHook {
 		}
 	}
 
-	/** Mark intent as DONE when agent attempts completion */
+	/** Mark intent as DONE and record the architectural decision in CLAUDE.md */
 	private async handleCompletion(context: HookContext): Promise<void> {
 		if (!context.activeIntentId) return
+
+		// 1. Transition intent to DONE
 		await this.intentLoader.updateIntentStatus(context.activeIntentId, "DONE")
+
+		// 2. Load intent for summary context
+		const intent = await this.intentLoader.loadIntent(context.activeIntentId)
+		const summary = intent
+			? `Intent **${intent.id}: ${intent.name}** was completed and marked DONE.\n\n` +
+				`**Acceptance Criteria Achieved:**\n${intent.acceptance_criteria.map((c) => `- ${c}`).join("\n")}\n\n` +
+				`**Scope covered:** ${intent.owned_scope.join(", ")}\n\n` +
+				`**Constraints honoured:** ${intent.constraints.join("; ")}`
+			: `Intent **${context.activeIntentId}** was completed.`
+
+		// 3. Record as an architectural DECISION in the shared brain (CLAUDE.md)
+		await this.intentLoader.appendEntry(summary, "DECISION")
 	}
 
 	/** Record baseline hash when agent reads files (enables optimistic locking) */

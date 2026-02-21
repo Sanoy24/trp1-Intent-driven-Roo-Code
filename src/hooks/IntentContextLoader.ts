@@ -32,7 +32,14 @@ export class IntentContextLoader {
 					console.warn(`[IntentContextLoader] Malformed YAML at ${yamlPath}: missing active_intents key`)
 					return []
 				}
-				return data.active_intents
+
+				// Normalize: support both 'id' and 'intent_id' as the primary key field
+				const normalized = data.active_intents.map((raw: any) => ({
+					...raw,
+					id: raw.id ?? raw.intent_id,
+				})) as IntentMetadata[]
+
+				return normalized
 			} catch (readError: any) {
 				if (readError.code === "ENOENT") {
 					// Expected if setup isn't done yet, but good to know WHERE it looked
@@ -200,21 +207,35 @@ ${criteriaList}
 	}
 
 	/**
-	 * Append lesson learned to CLAUDE.md
-	 * @param lesson The lesson to append
+	 * Append a categorized entry to CLAUDE.md (shared brain).
+	 * Categories:
+	 *   - LESSON: auto-appended when lint/tests fail (verification loop)
+	 *   - DECISION: auto-appended when an intent completes (architectural decision)
+	 *   - RULE: manually authored architectural constraints
+	 * @param entry  The content body of the entry
+	 * @param category The category label (defaults to "LESSON")
 	 */
-	async appendLesson(lesson: string): Promise<void> {
+	async appendEntry(entry: string, category: "LESSON" | "DECISION" | "RULE" = "LESSON"): Promise<void> {
+		await this.ensureOrchestrationDir()
 		const claudePath = path.join(this.orchestrationDir, "CLAUDE.md")
 		const timestamp = new Date().toISOString()
-		const entry = `\n- [${timestamp}] ${lesson}\n`
+		const section = `\n## [${category}] ${timestamp}\n\n${entry}\n`
 
 		try {
-			await fs.appendFile(claudePath, entry, "utf8")
-		} catch (error) {
-			// If file doesn't exist, create it with header
-			const header = `# Shared Brain — TRP1 Governed Workspace\n\n## Lessons Learned\n`
-			await fs.writeFile(claudePath, header + entry, "utf8")
+			await fs.appendFile(claudePath, section, "utf8")
+		} catch {
+			// File doesn't exist yet — create it with a header
+			const header = `# Shared Brain — TRP1 Governed Workspace\n\nThis file is auto-managed by the Hook Engine.\nDo not edit LESSON or DECISION sections manually.\n`
+			await fs.writeFile(claudePath, header + section, "utf8")
 		}
+	}
+
+	/**
+	 * Backwards-compatible alias for lint/test failure lessons.
+	 * @param lesson The lesson text
+	 */
+	async appendLesson(lesson: string): Promise<void> {
+		await this.appendEntry(lesson, "LESSON")
 	}
 
 	/**

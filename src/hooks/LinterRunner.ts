@@ -135,7 +135,7 @@ export class LinterRunner {
 	}
 
 	private async recordLesson(lesson: string, filePath: string): Promise<void> {
-		const fullLesson = `${lesson} (file: ${filePath})`
-		await this.intentLoader.appendLesson(fullLesson)
+		const body = `**File:** \`${filePath}\`\n\n**Error:**\n\`\`\`\n${lesson}\n\`\`\`\n\n**Action Required:** Inspect and fix the reported issue before the next agent turn.`
+		await this.intentLoader.appendEntry(body, "LESSON")
 	}
 }
