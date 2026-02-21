@@ -1,53 +1,53 @@
 active_intents:
-    - intent_id: INT-002
-      name: Weahter API
-      status: IN_PROGRESS
-      created_at: 2026-02-17T00:00:00Z
-      owned_scope:
-          - src/
-      constraints:
-          - All code changes must be traceable via SHA-256 hash
-          - Mutating actions require an active intent handshake
-          - Avoid external dependencies not already in the monorepo
-      acceptance_criteria:
-          - Hook Engine intercepts file writes
-          - Agent Trace ledger captures every modification
-          - System Prompt enforces select_active_intent protocol
-      id: INT-002
-      last_trace_ref: 01426d2f-0072-4cdc-bdb2-bc96873c3a5b
-    - id: INT-003
-      name: Build Weather API
-      status: DONE
-      created_at: 2026-02-21T10:50:48.473Z
-      owned_scope:
-          - src/**/*
-          - "*.ts"
-          - "*.js"
-          - "*.json"
-          - "*.md"
-      constraints:
-          - Use OpenWeatherMap API via HTTP only, no SDK
-          - All endpoints must return JSON with a consistent schema
-          - Implement proper error handling
-          - Use TypeScript for type safety
-      acceptance_criteria:
-          - GET /weather/:city returns temperature, humidity, and description
-          - GET /weather/coordinates/:lat/:lon returns weather by coordinates
-          - Unit tests cover the service layer
-          - API returns consistent JSON schema
-      last_trace_ref: 4742331e-e8a8-492d-8869-b7075bb31b74
-    - id: INT-004
-      name: Add Failing Test
-      status: IN_PROGRESS
-      created_at: 2026-02-21T10:58:52.342Z
-      owned_scope:
-          - src/weather/weatherService.test.ts
-      constraints:
-          - Add failing tests to demonstrate TDD principles
-          - Tests should fail because the functionality doesn't exist yet
-          - Include edge cases and future features
-      acceptance_criteria:
-          - Add at least one failing test that demonstrates missing functionality
-          - Test should be well-structured and clearly show what feature is missing
-          - Include comments explaining why the test should fail
-      last_trace_ref: ccf7260e-39a9-47f5-a657-834336934144
+  - intent_id: INT-002
+    name: Weahter API
+    status: IN_PROGRESS
+    created_at: 2026-02-17T00:00:00Z
+    owned_scope:
+      - src/
+    constraints:
+      - All code changes must be traceable via SHA-256 hash
+      - Mutating actions require an active intent handshake
+      - Avoid external dependencies not already in the monorepo
+    acceptance_criteria:
+      - Hook Engine intercepts file writes
+      - Agent Trace ledger captures every modification
+      - System Prompt enforces select_active_intent protocol
+    id: INT-002
+    last_trace_ref: 01426d2f-0072-4cdc-bdb2-bc96873c3a5b
+  - id: INT-003
+    name: Build Weather API
+    status: DONE
+    created_at: 2026-02-21T10:50:48.473Z
+    owned_scope:
+      - src/**/*
+      - "*.ts"
+      - "*.js"
+      - "*.json"
+      - "*.md"
+    constraints:
+      - Use OpenWeatherMap API via HTTP only, no SDK
+      - All endpoints must return JSON with a consistent schema
+      - Implement proper error handling
+      - Use TypeScript for type safety
+    acceptance_criteria:
+      - GET /weather/:city returns temperature, humidity, and description
+      - GET /weather/coordinates/:lat/:lon returns weather by coordinates
+      - Unit tests cover the service layer
+      - API returns consistent JSON schema
+    last_trace_ref: 4742331e-e8a8-492d-8869-b7075bb31b74
+  - id: INT-004
+    name: Add Failing Test
+    status: IN_PROGRESS
+    created_at: 2026-02-21T10:58:52.342Z
+    owned_scope:
+      - src/weather/weatherService.test.ts
+    constraints:
+      - Add failing tests to demonstrate TDD principles
+      - Tests should fail because the functionality doesn't exist yet
+      - Include edge cases and future features
+    acceptance_criteria:
+      - Add at least one failing test that demonstrates missing functionality
+      - Test should be well-structured and clearly show what feature is missing
+      - Include comments explaining why the test should fail
+    last_trace_ref: ccf7260e-39a9-47f5-a657-834336934144

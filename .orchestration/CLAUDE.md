@@ -17,6 +17,36 @@ _Append-only. Machine-managed brain for cross-session knowledge persistence._
 - All code generated must be accompanied by a semantic trace record.
 - Destructive commands MUST be explicitly classification-checked by the Hook Engine.
 
+## [LESSON] 2026-02-21T09:20:40.463Z
+
+**File:** `src/weather/weatherService.ts`
+
+**Error:**
+
+```
+ESLint: no-floating-promises — Promise returned by `fetchWeather` must be awaited.
+```
+
+**Action Required:** Inspect and fix the reported issue before the next agent turn.
+
+## [DECISION] 2026-02-21T09:20:40.467Z
+
+Intent **INT-001: Build Weather API** was completed and marked DONE.
+
+**Acceptance Criteria Achieved:**
+
+- GET /weather/:city returns temperature, humidity, and description
+- Unit tests cover the service layer
+
+**Scope covered:** src/weather/\*_/_.ts, src/routes/weather.ts
+
+**Constraints honoured:** Use OpenWeatherMap API via HTTP only, no SDK; All endpoints must return JSON with a consistent schema
+
+## [RULE] 2026-02-21T09:20:40.474Z
+
+All new API routes MUST be registered in `src/routes/index.ts`.
+Do not create standalone Express apps in individual service files.
+
 ## [DECISION] 2026-02-21T10:58:22.601Z
 
 Intent **INT-003: Build Weather API** was completed and marked DONE.
